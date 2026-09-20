@@ -1,0 +1,15 @@
+{
+  "name": "pixel-meet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "도트 공간에서 만나는 채팅 소개팅 앱 (React Native + Expo + Socket.io)",
+  "scripts": {
+    "app": "npm --prefix app run start",
+    "app:web": "npm --prefix app run web",
+    "app:ios": "npm --prefix app run ios",
+    "app:android": "npm --prefix app run android",
+    "server": "npm --prefix server run start",
+    "install:all": "npm --prefix app install && npm --prefix server install",
+    "typecheck": "npm --prefix app exec tsc -- --noEmit"
+  }
+}

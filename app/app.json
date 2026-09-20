@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "PIXEL MEET",
+    "slug": "pixel-meet",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c7dd5b07-f171-4422-8ccb-7abe05842937"
+      }
+    },
+    "owner": "jhy",
+    "runtimeVersion": "exposdk:57.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/c7dd5b07-f171-4422-8ccb-7abe05842937"
+    }
+  }
+}
