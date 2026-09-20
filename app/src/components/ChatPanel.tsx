@@ -1,14 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { C } from '../theme';
 import type { ChatMessage, ChatSession, Player, Profile } from '../types';
 import { Avatar } from './Avatar';
@@ -46,11 +37,9 @@ export function ChatPanel({ session, partner, me, messages, onSend, onLeave }: P
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.wrap}
-      keyboardVerticalOffset={8}
-    >
+    // 키보드 대응은 RoomScreen 최상단의 KeyboardAvoidingView 하나가 화면 전체를 맡는다.
+    // 여기서 또 감싸면 이중으로 밀려서 입력창이 오히려 더 어긋난다.
+    <View style={styles.wrap}>
       <View style={styles.header}>
         <View style={styles.avatarBox}>
           {partner ? <Avatar look={partner.profile.look} dir="down" /> : null}
@@ -99,7 +88,7 @@ export function ChatPanel({ session, partner, me, messages, onSend, onLeave }: P
           <Text style={styles.sendText}>전송</Text>
         </Pressable>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

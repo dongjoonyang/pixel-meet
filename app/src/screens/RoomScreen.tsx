@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Animated,
+  KeyboardAvoidingView,
   LayoutChangeEvent,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -261,7 +263,11 @@ export function RoomScreen({ map, me, onExit }: Props) {
   }
 
   return (
-    <View style={styles.root}>
+    // 채팅 입력창이 키보드에 가려지는 문제: 화면 전체를 여기서 한 번만 감싼다.
+    // 게임 지도(stage)는 flex:1이라 키보드가 뜨면 자연히 줄어들고, ChatPanel은
+    // 고정 높이 그대로 항상 화면 안에 남는다. (ChatPanel 내부에 별도로 KeyboardAvoidingView를
+    // 두면 이중으로 밀려서 오히려 더 어긋난다 — 여기 한 곳에서만 처리한다.)
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.topBar}>
         <Pressable onPress={onExit} style={styles.exit}>
           <Text style={styles.exitText}>‹ 로비</Text>
@@ -400,7 +406,7 @@ export function RoomScreen({ map, me, onExit }: Props) {
           setIncoming(null);
         }}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
