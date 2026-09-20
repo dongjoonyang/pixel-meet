@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { C } from '../theme';
 import { AFK_AFTER_MS, NET_TICK_MS, TILE, WALK_SPEED } from '../game/constants';
-import { isSeatTile, moveWithCollision, tileCenter, toTile } from '../game/collision';
+import { isSeatTile, isSolidTile, moveWithCollision, tileCenter, toTile } from '../game/collision';
 import { nearby } from '../game/proximity';
 import { zoneAtTile, type GameMap } from '../game/maps/types';
 import { createConnection, type RoomConnection } from '../net';
@@ -39,6 +39,23 @@ interface Props {
   map: GameMap;
   me: Profile;
   onExit: () => void;
+}
+
+/**
+ * 좌석 타일(tx, ty)에서 일어설 때 나갈 빈 칸을 찾는다.
+ * 무조건 '아래로 한 칸'만 시도하면 도서관처럼 좌석 바로 아래가 책상인 자리(desk-1의 위쪽 좌석 등),
+ * 지하철 아래쪽 벤치처럼 아래가 벽인 자리에서 그대로 책상/벽 안에 박혀버린다.
+ * 아래→위→왼쪽→오른쪽 순으로 실제로 통과 가능한 칸을 찾아서 그리로 내보낸다.
+ */
+function standUpTile(map: GameMap, tx: number, ty: number): { x: number; y: number } {
+  const candidates: [number, number][] = [
+    [tx, ty + 1],
+    [tx, ty - 1],
+    [tx - 1, ty],
+    [tx + 1, ty],
+  ];
+  const [fx, fy] = candidates.find(([cx, cy]) => !isSolidTile(map, cx, cy)) ?? candidates[0];
+  return { x: tileCenter(fx), y: tileCenter(fy) };
 }
 
 export function RoomScreen({ map, me, onExit }: Props) {
@@ -364,8 +381,9 @@ export function RoomScreen({ map, me, onExit }: Props) {
                 tone="ghost"
                 onPress={() => {
                   if (meView.seatId) {
-                    // 의자에서 한 칸 내려온다
-                    pos.current = { x: pos.current.x, y: pos.current.y + TILE };
+                    const seatTx = toTile(pos.current.x);
+                    const seatTy = toTile(pos.current.y - 1);
+                    pos.current = standUpTile(map, seatTx, seatTy);
                     playerXY.setValue(pos.current);
                     applyCamera();
                   } else if (near) {
