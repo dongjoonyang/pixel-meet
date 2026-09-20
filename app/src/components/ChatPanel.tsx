@@ -97,7 +97,10 @@ const styles = StyleSheet.create({
     backgroundColor: C.panel,
     borderTopWidth: 3,
     borderColor: C.border,
-    maxHeight: 340,
+    // header(고정) + list(고정 height) + inputRow(고정) 셋 다 크기가 정해져 있으니
+    // wrap 자체엔 maxHeight를 안 둔다. 예전엔 maxHeight:340을 줬는데, 안드로이드에서
+    // 아래 list가 내용과 무관하게 항상 남은 공간을 다 차지해버리면서 그 합이 340을
+    // 넘어 inputRow(전송 버튼)가 화면 밖으로 밀려나는 문제가 있었다.
   },
   header: {
     flexDirection: 'row',
@@ -113,7 +116,10 @@ const styles = StyleSheet.create({
   sub: { color: C.textDim, fontSize: 11, marginTop: 1 },
   leave: { borderWidth: 2, borderColor: C.danger, paddingHorizontal: 8, paddingVertical: 4 },
   leaveText: { color: C.danger, fontSize: 11, fontWeight: '800' },
-  list: { maxHeight: 210 },
+  // 안드로이드에서 ScrollView에 maxHeight만 주면 내용이 적어도 그 최대치를 그대로
+  // 차지해버리는 경우가 있다 (그러면 밑의 입력창이 화면 밖으로 밀려난다).
+  // 고정 height로 주면 플랫폼과 무관하게 항상 예측 가능한 크기가 된다.
+  list: { height: 190 },
   listInner: { padding: 10, gap: 8 },
   notice: { color: C.textDim, fontSize: 10, textAlign: 'center', marginBottom: 4 },
   row: { flexDirection: 'row' },

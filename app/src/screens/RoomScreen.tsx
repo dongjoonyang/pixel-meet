@@ -58,6 +58,12 @@ function standUpTile(map: GameMap, tx: number, ty: number): { x: number; y: numb
   return { x: tileCenter(fx), y: tileCenter(fy) };
 }
 
+// iOS만 KeyboardAvoidingView를 쓴다. 안드로이드는 그냥 View — OS의 adjustResize에 맡긴다
+// (KeyboardAvoidingView를 behavior 없이 얹기만 해도 안드로이드에서 TextInput이 포커스를
+// 못 잡아 키보드 자체가 안 올라오는 문제가 있었다).
+const RootShell: React.ComponentType<any> = Platform.OS === 'ios' ? KeyboardAvoidingView : View;
+const rootShellProps = Platform.OS === 'ios' ? { behavior: 'padding' as const } : {};
+
 export function RoomScreen({ map, me, onExit }: Props) {
   const [conn, setConn] = useState<RoomConnection | null>(null);
   const [others, setOthers] = useState<Player[]>([]);
@@ -282,9 +288,13 @@ export function RoomScreen({ map, me, onExit }: Props) {
   return (
     // 채팅 입력창이 키보드에 가려지는 문제: 화면 전체를 여기서 한 번만 감싼다.
     // 게임 지도(stage)는 flex:1이라 키보드가 뜨면 자연히 줄어들고, ChatPanel은
-    // 고정 높이 그대로 항상 화면 안에 남는다. (ChatPanel 내부에 별도로 KeyboardAvoidingView를
-    // 두면 이중으로 밀려서 오히려 더 어긋난다 — 여기 한 곳에서만 처리한다.)
-    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    // 고정 높이 그대로 항상 화면 안에 남는다.
+    // 안드로이드(Expo Go)는 windowSoftInputMode가 기본적으로 adjustResize라 OS가 이미
+    // 창을 줄여준다 — 여기에 KeyboardAvoidingView까지 얹으면(behavior=undefined라도)
+    // 왜인지 안드로이드에서 TextInput이 포커스를 못 잡고 키보드 자체가 안 올라오는
+    // 문제가 있었다. 그래서 안드로이드는 이 컴포넌트를 아예 쓰지 않고 로비 화면처럼
+    // 평범한 View로 두고 OS 리사이즈에만 맡긴다.
+    <RootShell style={styles.root} {...rootShellProps}>
       <View style={styles.topBar}>
         <Pressable onPress={onExit} style={styles.exit}>
           <Text style={styles.exitText}>‹ 로비</Text>
@@ -424,7 +434,7 @@ export function RoomScreen({ map, me, onExit }: Props) {
           setIncoming(null);
         }}
       />
-    </KeyboardAvoidingView>
+    </RootShell>
   );
 }
 
