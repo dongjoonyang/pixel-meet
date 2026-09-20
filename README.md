@@ -127,12 +127,37 @@ exp://u.expo.dev/c7dd5b07-f171-4422-8ccb-7abe05842937?channel-name=production
 - **주의**: `app.json`의 `runtimeVersion`이 반드시 `"exposdk:<설치된 Expo SDK 버전>"` 형식이어야
   Expo Go가 연다. `eas update`가 처음 자동으로 잡아주는 `{"policy":"appVersion"}`은 Expo Go에서
   안 열려서(런타임 버전이 안 맞음) `"exposdk:57.0.0"`으로 고쳤다 — SDK를 올리면 이 값도 같이 올려야 한다.
-- 이 링크는 **JS 번들만** 배포한다. 소켓 서버(`server/`)는 여전히 로컬 PC에서만 돌고 있어서, 밖에서
-  열면 실시간 채팅은 자동으로 **로컬 NPC 모드**로 폴백한다(원래 설계된 동작). 캐릭터 생성·Supabase
-  프로필 저장·NPC 대화는 다 된다. 실제 다른 사람과 밖에서도 매칭하려면 `server/`를 Render/Fly.io
-  같은 데 올려서 공개 URL을 만들고 `app/.env`의 `EXPO_PUBLIC_SERVER_URL`을 그걸로 바꿔야 한다
-  (아직 안 함 — 필요해지면 이어서 진행).
+- 이 링크는 **JS 번들만** 배포한다. 실시간 채팅 서버는 별도로 배포돼 있다 (아래 참고).
 - 코드를 고칠 때마다 `eas update`를 다시 돌려야 폰에 반영된다 (자동 배포 아님).
+
+## 실시간 서버 배포 (Render)
+
+`server/`를 [Render](https://render.com)에 무료 Web Service로 올려서 아무나 접속할 수 있는 공개 서버로
+만들었다: **https://pixel-meet-server.onrender.com** — `app/.env`의 `EXPO_PUBLIC_SERVER_URL`이 이걸
+가리키고 있고, 위 EAS Update 링크로 열면 이 서버에 자동으로 붙는다.
+
+- **코드**: GitHub 공개 저장소 [`dongjoonyang/pixel-meet`](https://github.com/dongjoonyang/pixel-meet)를
+  Render가 보고 있다 (`autoDeploy: yes`, rootDir `server/`) — `main`에 푸시하면 자동 재배포된다.
+- **왜 Render인가**: Fly.io는 신규 가입에 카드 등록이 필수로 바뀌었고, Koyeb은 무료 티어 신규 가입이
+  막힌 상태라(2026년 기준) 카드 없이 되는 선택지가 Render뿐이었다.
+- **무료 티어의 트레이드오프**: 15분 동안 아무 요청이 없으면 서버가 잠들고, 다음 요청이 오면
+  20~30초 뒤에 깨어난다. 그래서:
+  - 클라이언트의 최초 연결 타임아웃을 25초로 늘려뒀다(`tryConnect`) — 짧게 잡으면 서버가 깨어나기도
+    전에 로컬 모드로 폴백해버린다.
+  - 연결이 끊기면 소켓이 자동 재연결을 시도하고, 재연결될 때마다 다시 `join`을 보내 방에 복귀한다.
+  - 대화 중간에 서버가 잠들 일은 없다(활성 연결이 있으면 "무활동"이 아님) — 잠드는 건 정말 아무도
+    안 쓸 때뿐.
+- **검증한 것**: 배포 직후 실제 공개 URL로 두 클라이언트를 붙여서 좌석 동석 → 세션 생성 → 양방향
+  채팅까지 실제로 확인함 (로컬 스모크 테스트와 동일한 시나리오, `프로덕션 URL` 기준).
+
+Render 서비스를 새로 만들려면(다른 계정으로 옮기는 경우):
+```bash
+# Render 대시보드에서 New > Web Service > 이 GitHub 저장소 선택
+# Root Directory: server
+# Build Command: npm install
+# Start Command: npm start
+# Plan: Free
+```
 
 ## 아직 없는 것
 
@@ -143,4 +168,6 @@ exp://u.expo.dev/c7dd5b07-f171-4422-8ccb-7abe05842937?channel-name=production
 - 신고/차단, 이미지 전송
 - 서버가 맵을 두 벌(app TS / server JS) 유지하는 구조 — 맵을 바꾸면 두 곳 다 고쳐야 함 (모노레포 공유 패키지로
   분리하면 해결되지만 MVP 범위를 넘어서 미룸)
-- 실기기 2대로 붙인 실제 필드 테스트 (지금까지는 소켓 클라이언트 스크립트 + 헤드리스 브라우저로 E2E 검증)
+- **진짜 사람 둘이 실기기 두 대로 붙어보는 필드 테스트**: 실기기 1대(iOS, Expo Go) + 공개 서버는
+  확인했지만, 검증은 여전히 스크립트로 만든 소켓 클라이언트 두 개로 했다 — 사람 두 명이 동시에
+  들어가서 서로 발견하고 대화하는 것까지는 아직 실사용으로 안 해봤다.
