@@ -255,6 +255,7 @@ export function RoomScreen({ map, me, onExit }: Props) {
         <Text style={styles.loadingText}>
           {map.emoji} {map.name} 입장 중…
         </Text>
+        <Text style={styles.loadingHint}>서버가 잠들어 있었다면 깨우는 데 20~30초 걸릴 수 있어요</Text>
       </View>
     );
   }
@@ -407,6 +408,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   loading: { flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { color: C.textDim, fontSize: 13 },
+  loadingHint: { color: C.textDim, fontSize: 11, opacity: 0.7 },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

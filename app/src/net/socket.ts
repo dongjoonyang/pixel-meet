@@ -16,14 +16,23 @@ export class SocketConnection implements RoomConnection {
     map: GameMap,
     profile: Profile,
   ) {
-    socket.emit('join', { roomId: map.id, profile, spawn: map.spawn });
+    // 무료 호스팅(Render 등)은 재시작·순단이 흔하다. 재연결하면 소켓 id가 바뀌면서
+    // 서버 쪽 플레이어 정보가 사라지므로, 매번 connect 시점에 다시 join 해서 방에 복귀시킨다.
+    const join = () => socket.emit('join', { roomId: map.id, profile, spawn: map.spawn });
+    join();
+    socket.on('connect', join);
+
     socket.on('players', (p) => this.bus.emit('players', p));
     socket.on('message', (m) => this.bus.emit('message', m));
     socket.on('request', (r) => this.bus.emit('request', r));
     socket.on('requestResult', (r) => this.bus.emit('requestResult', r));
     socket.on('session', (s) => this.bus.emit('session', s));
     socket.on('system', (t) => this.bus.emit('system', t));
-    socket.on('disconnect', () => this.bus.emit('system', '서버 연결이 끊겼어요.'));
+    socket.on('disconnect', () => this.bus.emit('system', '서버 연결이 끊겼어요. 재연결 시도 중…'));
+    socket.on('reconnect', () => this.bus.emit('system', '다시 연결됐어요.'));
+
+    // 최초 연결 확인용으로는 재연결을 꺼둔 채로(tryConnect) 넘어온 소켓이라, 여기서부터는 켠다.
+    socket.io.reconnection(true);
   }
 
   on: RoomConnection['on'] = (ev, cb) => this.bus.on(ev, cb);
@@ -56,8 +65,13 @@ export class SocketConnection implements RoomConnection {
   }
 }
 
-/** 서버가 떠 있으면 소켓, 아니면 null. 호출부에서 목 서버로 폴백한다. */
-export function tryConnect(url: string, timeoutMs = 1500): Promise<Socket | null> {
+/**
+ * 서버가 떠 있으면 소켓, 아니면 null. 호출부에서 목 서버로 폴백한다.
+ * 타임아웃을 넉넉히 잡는 이유: Render 무료 티어는 15분 무활동이면 잠들고,
+ * 깨어나는 데 최대 20~30초 정도 걸린다. 서버가 아예 없는 경우(로컬 개발)는
+ * ECONNREFUSED가 거의 즉시 나서 이 타임아웃과 무관하게 빠르게 폴백된다.
+ */
+export function tryConnect(url: string, timeoutMs = 25000): Promise<Socket | null> {
   return new Promise((resolve) => {
     let done = false;
     const socket = io(url, {
